@@ -64,54 +64,59 @@ void MainWindow::paintEvent(QPaintEvent*)
 
 
 
-// Funkcja zamalowująca na czarno wszystkie piksele obrazu *img
 void MainWindow::clean()
 {
     // deklaracja wskaźnika do poruszania się po pikselach obrazu
-    unsigned char *ptr;
+    unsigned char *wsk;
 
-    ptr = img->bits();
-
-    int i,j;
-    int kolor =0;
-
-    for( i=0; i<height; i++)
+    // przechodzimy po wszystkich wierszach obrazu
+    for(int i=0; i<height; i++)
     {
-            for(j=0; j<width; j++)
-            {
-                ptr[width*4*j + 4*j] = kolor;   // ustawiamy składową ,,niebieską'' na 0
-                ptr[width*4*j + 4*j + 1] = kolor; // ustawiamy składową ,,zielonąą'' na 0
-                ptr[width*4*j + 4*j + 2] = kolor; // ustawiamy składową ,,czerwoną'' na 0
-            }
-    }
+        // ustawiamy wskaźnik na początku i-tego wiersza
+        wsk = img->scanLine(i);
 
- }
+        // przechodzimy po wszystkich piselach i-tego wiersza
+        // i nadajemy im wartość (0,0,0) odpowiadającą kolorowi czarnemu
+        for(int j=0; j<width; j++)
+        {
+            wsk[4*j] = 0;   // ustawiamy składową ,,niebieską'' na 0
+            wsk[4*j+1] = 0; // ustawiamy składową ,,zielonąą'' na 0
+            wsk[4*j+2] = 0; // ustawiamy składową ,,czerwoną'' na 0
+        }
+    }
+}
 
 //*****************************************************************************************************
 
-
-
-
-
-
-
-
-
-
-int MainWindow::wstaw_piksel(int x0, int y0, int b, int g, int r) {
-
+// zamalowuje piksel (x,y) na kolor (red,green,blue), domyślnie na biało
+int MainWindow::wstaw_piksel(int x, int y, int b, int g, int r)
+{
     unsigned char *wsk;
 
-
-    if ((x0>=0)&&(y0>=0)&&(x0<width)&&(y0<height))
+    // sprawdzamy czy (x,y) leży w granicach rysunku
+    if(x>=0 && y>=0 && x<width && y<height)
     {
-        wsk = img->bits();
-        wsk[width*4*y0 + 4*x0] = b;
-        wsk[width*4*y0 + 4*x0+1] = g;
-        wsk[width*4*y0 + 4*x0+2] = r;
+        wsk = img->scanLine(y);
+        wsk[4*x] = b;
+        wsk[4*x+1] = g;
+        wsk[4*x+2] = r;
     }
     return(0);
 }
+//int MainWindow::wstaw_piksel(int x0, int y0, int b, int g, int r) {
+
+//    unsigned char *wsk;
+
+
+//    if ((x0>=0)&&(y0>=0)&&(x0<width)&&(y0<height))
+//    {
+//        wsk = img->bits();
+//        wsk[width*4*y0 + 4*x0] = b;
+//        wsk[width*4*y0 + 4*x0+1] = g;
+//        wsk[width*4*y0 + 4*x0+2] = r;
+//    }
+//    return(0);
+//}
 
 
 int MainWindow::wstaw_punkt(int x0, int y0, int grubosc, int b, int g, int r)
@@ -232,7 +237,7 @@ int MainWindow::rysuj()
             if (i % 4 !=0 || i==0)
                 wstaw_punkt(x[i],y[i],grubosc,0,0,255);
             if (aktywny != -1)
-                wstaw_punkt(x[aktywny],y[aktywny],grubosc,0,255,0);
+                wstaw_punkt(x[aktywny],y[aktywny],1,0,255,0);
         }
 
         if (ktory_punkt>=3)
@@ -268,7 +273,7 @@ void MainWindow::draw_bezier(int px0, int py0, int px1, int py1,int px2, int py2
         y_1=qPow((1-t),3)*y[py0]+3*(qPow((1-t),2))*t*y[py1]+3*(1-t)*qPow(t,2)*y[py2]+qPow(t,3)*y[py3];
 
         //drawPixel(x_1,y_1);
-        wstaw_punkt(x_1,y_1,grubosc,0,255,0);
+        wstaw_punkt(x_1,y_1,1,0,255,0);
     }
 }
 
