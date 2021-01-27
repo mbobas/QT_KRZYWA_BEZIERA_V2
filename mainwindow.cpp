@@ -97,7 +97,7 @@ int MainWindow::drawPixel(int x, int y, int blue, int green, int red)
     return(0);
 }
 
-void MainWindow::drawBigPixel(int x,int y, int blue, int green, int red)
+void MainWindow::drawBigPixel(int x,int y)
 {
     x=x-5; // poczatek kwadratu x
     y=y-5; // // poczatek kwadratu y
@@ -123,7 +123,7 @@ void MainWindow::mousePressEvent(QMouseEvent *event)
             numberOfPixels++;  // licznik pikseli w tablicach x i y
             x[numberOfPixels] = pointX; // zapisanie wspolrzednej x do tablicy
             y[numberOfPixels] = pointY; // zapisanei y do tablicy
-             QTextStream(stdout) << "1) zapisano punkt w tablicy " << pointX <<pointY << " \n";
+             //QTextStream(stdout) << "1) zapisano punkt w tablicy " << pointX <<pointY << " \n";
             // jesli liczba pikseli osiagnie wielokrotnosc 4 to zwiekszamy licznik lini
             if(numberOfPixels % 4 == 3)
             {
@@ -131,7 +131,7 @@ void MainWindow::mousePressEvent(QMouseEvent *event)
                 numberOfPixels++; // licznik pikseli
                 x[numberOfPixels] = pointX; // piksel poczatku nowej krzywej beziera
                 y[numberOfPixels] = pointY; //
-                 QTextStream(stdout) << "2) zapisano punkt w tablicy " << pointX <<pointY << " \n";
+                 //QTextStream(stdout) << "2) zapisano punkt w tablicy " << pointX <<pointY << " \n";
             }
             refresh_and_draw_all();
         }
@@ -147,7 +147,7 @@ void MainWindow::mousePressEvent(QMouseEvent *event)
                         //zapamietanie, ktory element w tablicy jest czerwonym buttonem
 
                         activeRedButton=i;
-                        QTextStream(stdout) <<"i: " << i << " - 3) aktywny - zapamietano wsp buttona " << x[i] <<y[i] << " \n";
+                        //QTextStream(stdout) <<"i: " << i << " - 3) aktywny - zapamietano wsp buttona " << x[i] <<y[i] << " \n";
                     }
 
             if (activeRedButton != -1)
@@ -220,13 +220,8 @@ int MainWindow::refresh_and_draw_all()
             // rysuj czerwone punkty 0,1,2,3 bez 4
 
             if (i % 4 !=0 || i==0){
-                drawBigPixel(x[i],y[i],0,0,255);
+                drawBigPixel(x[i],y[i]);
             }
-
-            //rysuj wszsytkie punkty podczas przesuwania buttona
-//            if (activeRedButton != -1){
-//                drawBigPixel(x[activeRedButton],y[activeRedButton],255,0,0);
-//            }
 
         }
 
@@ -252,8 +247,7 @@ void MainWindow::draw_bezier(int px0, int py0, int px1, int py1,int px2, int py2
         x_1=qPow((1-t),3)*x[px0]+3*(qPow((1-t),2))*t*x[px1]+3*(1-t)*qPow(t,2)*x[px2]+qPow(t,3)*x[px3];
         y_1=qPow((1-t),3)*y[py0]+3*(qPow((1-t),2))*t*y[py1]+3*(1-t)*qPow(t,2)*y[py2]+qPow(t,3)*y[py3];
 
-        //drawPixel(x_1,y_1);
-        drawPixel(x_1,y_1,0,255,0);
+        drawPixel(x_1,y_1,122,160,30);
     }
 }
 

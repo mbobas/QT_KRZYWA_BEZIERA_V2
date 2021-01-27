@@ -61,7 +61,7 @@ private:
 
     void clean_screen();
     int  drawPixel(int x0, int y0, int blue, int green, int red);
-    void drawBigPixel(int x,int y, int blue, int green, int red);
+    void drawBigPixel(int x,int y);
     void draw_bezier(int px0, int py0, int px1, int py1,int px2, int py2,int px3, int py3);
     int refresh_and_draw_all();
 };
