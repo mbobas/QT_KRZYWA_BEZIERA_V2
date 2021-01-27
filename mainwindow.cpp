@@ -10,9 +10,6 @@ MainWindow::MainWindow(QWidget *parent) :
     ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
-
-
-
     // Pobieramy wymiary ramki
     width = ui->frame->width();
     height = ui->frame->height();
@@ -23,19 +20,15 @@ MainWindow::MainWindow(QWidget *parent) :
     // Tworzymy obiekt klasy QImage o wymiarach równych wymiarom ramki
     // Format_RGB32 to 32 bitowe RGB (z kanałem alfa ustawionym na wartość 255)
     img = new QImage(width, height, QImage::Format_RGB32);
+    //nadajemy kolor podstawowy
+     red=255;
+     green=0;
+     blue=0;
 
-
-     r=255;
-     g=0;
-     b=0;
-
-     ile_punktow =0;
-     ktory_punkt = -1;
-     grubosc = 4;
-     aktywny = -1;
-     czy_styczne = 0;
-     czy_punkty = 1;
-     segment = -1;
+     numberOfPixels = -1; // ilosc kliknietych pikseli
+     highOfBigPixel = 4; // wielkosc kliknietego piksela
+     activeRedButton = -1; // czy button czerwony byl juz klikniety // ustawione na -1
+     counterOfLines = -1; // licznik krzywych beziera wielokrotnosc 4ki
 }
 //*****************************************************************************************************
 
@@ -64,7 +57,7 @@ void MainWindow::paintEvent(QPaintEvent*)
 
 
 
-void MainWindow::clean()
+void MainWindow::clean_screen()
 {
     // deklaracja wskaźnika do poruszania się po pikselach obrazu
     unsigned char *wsk;
@@ -89,7 +82,7 @@ void MainWindow::clean()
 //*****************************************************************************************************
 
 // zamalowuje piksel (x,y) na kolor (red,green,blue), domyślnie na biało
-int MainWindow::wstaw_piksel(int x, int y, int b, int g, int r)
+int MainWindow::drawPixel(int x, int y, int blue, int green, int red)
 {
     unsigned char *wsk;
 
@@ -97,87 +90,68 @@ int MainWindow::wstaw_piksel(int x, int y, int b, int g, int r)
     if(x>=0 && y>=0 && x<width && y<height)
     {
         wsk = img->scanLine(y);
-        wsk[4*x] = b;
-        wsk[4*x+1] = g;
-        wsk[4*x+2] = r;
+        wsk[4*x] = blue;
+        wsk[4*x+1] = green;
+        wsk[4*x+2] = red;
     }
     return(0);
 }
-//int MainWindow::wstaw_piksel(int x0, int y0, int b, int g, int r) {
 
-//    unsigned char *wsk;
-
-
-//    if ((x0>=0)&&(y0>=0)&&(x0<width)&&(y0<height))
-//    {
-//        wsk = img->bits();
-//        wsk[width*4*y0 + 4*x0] = b;
-//        wsk[width*4*y0 + 4*x0+1] = g;
-//        wsk[width*4*y0 + 4*x0+2] = r;
-//    }
-//    return(0);
-//}
-
-
-int MainWindow::wstaw_punkt(int x0, int y0, int grubosc, int b, int g, int r)
+void MainWindow::drawBigPixel(int x,int y, int blue, int green, int red)
 {
-    int i,j;
-    for(j=y0-grubosc; j<=y0+grubosc; j++){
-        for (i=x0-grubosc; i<=x0+grubosc; i++){
-            wstaw_piksel(i,j,b,g,r);
+    x=x-5; // poczatek kwadratu x
+    y=y-5; // // poczatek kwadratu y
+
+    //rysowanie kwadradu a=5 pikseli
+    for(int i=0; i<=10; i++){
+        for (int j=0; j<=10; j++) {
+            drawPixel(x+i,y+j, 0,0,255);
         }
     }
- return(0);
 }
 
-void MainWindow::on_styczne_clicked()
-{
-    if (czy_styczne==0)
-    {
-        czy_styczne=1;
-        rysuj();
-    }
-    else
-    {
-        czy_styczne=0;
-        rysuj();
-    }
-}
 
 void MainWindow::mousePressEvent(QMouseEvent *event)
 {
-        int X, Y, i;
-        //pobieramy pkt klikniecia
-        X = event->x() - startX;
-        Y = event->y() - startY;
+        int pointX, pointY, i;
+        //pobieramy pkt X Y klikniecia
+        pointX = event->x() - startX;
+        pointY = event->y() - startY;
 
         if(event->button() == Qt::RightButton )
         {
-            ktory_punkt++;
-            x[ktory_punkt] = X;
-            y[ktory_punkt] = Y;
-            //segment = ktory_punkt /4;
-            if(ktory_punkt % 4 == 3)
+            numberOfPixels++;  // licznik pikseli w tablicach x i y
+            x[numberOfPixels] = pointX; // zapisanie wspolrzednej x do tablicy
+            y[numberOfPixels] = pointY; // zapisanei y do tablicy
+             QTextStream(stdout) << "1) zapisano punkt w tablicy " << pointX <<pointY << " \n";
+            // jesli liczba pikseli osiagnie wielokrotnosc 4 to zwiekszamy licznik lini
+            if(numberOfPixels % 4 == 3)
             {
-                segment++;
-                ktory_punkt++;
-                x[ktory_punkt] = X;
-                y[ktory_punkt] =Y;
+                counterOfLines++; // licznik lini
+                numberOfPixels++; // licznik pikseli
+                x[numberOfPixels] = pointX; // piksel poczatku nowej krzywej beziera
+                y[numberOfPixels] = pointY; //
+                 QTextStream(stdout) << "2) zapisano punkt w tablicy " << pointX <<pointY << " \n";
             }
-            rysuj();
+            refresh_and_draw_all();
         }
 
+        //sprawdzenie czy punkt jest czerwonym buttonem
         if ( event->button() == Qt::LeftButton)
         {
-            for (i=0; i<=ktory_punkt; i++)
+            for (i=0; i<=numberOfPixels; i++)
                 if (i%4 != 0 || i==0)
-                    if (abs(X-x[i])<=grubosc && abs(Y-y[i])<=grubosc)
+                    if (abs(pointX-x[i])<=highOfBigPixel && abs(pointY-y[i])<=highOfBigPixel)
+                        // wartosc bezwzgledna abs - odleglosc <= highOfBigPixel
                     {
+                        //zapamietanie, ktory element w tablicy jest czerwonym buttonem
 
-                        aktywny=i;
+                        activeRedButton=i;
+                        QTextStream(stdout) <<"i: " << i << " - 3) aktywny - zapamietano wsp buttona " << x[i] <<y[i] << " \n";
                     }
-            if (aktywny != -1)
-                rysuj();
+
+            if (activeRedButton != -1)
+                refresh_and_draw_all();
         }
 
 }
@@ -185,87 +159,93 @@ void MainWindow::mousePressEvent(QMouseEvent *event)
 
 void MainWindow::mouseReleaseEvent(QMouseEvent *event)
 {
-    int X, Y;
-    //pobieramy pkt klikniecia
-    X = event->x() - startX;
-    Y = event->y() - startY;
-    if (aktywny != -1)
+     int pointX, pointY;
+    //pobieramy pkt puszczenia buttona
+    pointX = event->x() - startX;
+    pointY = event->y() - startY;
+
+
+    if (activeRedButton != -1) // jesli kliknieto czerwony button
     {
-        x[aktywny] = X;
-        y[aktywny] = Y;
-        aktywny = -1;
-        if (aktywny % 4 == 3 )
+        //podmien wspolrzedne redbuttona
+        x[activeRedButton] = pointX;
+        y[activeRedButton] = pointY;
+
+        activeRedButton = -1;
+
+        //jesli redbutton jest 4tym punktem na krzywej beziera to podmien tez +1 / doubel punktu
+        if (activeRedButton % 4 == 3 )
         {
-                x[aktywny+1]=X;
-                y[aktywny+1]=Y;
+                x[activeRedButton+1]=pointX;
+                y[activeRedButton+1]=pointY;
         }
-        rysuj();
+        refresh_and_draw_all();
     }
         update();
 }
 
 void MainWindow::mouseMoveEvent( QMouseEvent * event )
 {
-        int X, Y;
+        int pointX, pointY;
         //pobieramy pkt klikniecia
-        X = event->x() - startX;
-        Y = event->y() - startY;
-        if (aktywny != -1)
+        pointX = event->x() - startX;
+        pointY = event->y() - startY;
+
+        //jesli redbutton jest aktywny
+        if (activeRedButton != -1)
         {
-            x[aktywny] = X;
-            y[aktywny] = Y;
-            if (aktywny % 4 == 3 )
+            //pobieraj wsp aktywnego
+            x[activeRedButton] = pointX;
+            y[activeRedButton] = pointY;
+
+            if (activeRedButton % 4 == 3 )
             {
-                 x[aktywny+1]=X;
-                 y[aktywny+1]=Y;
+                //pobieraj wsp. aktywnego + 1 // dla co 4 punktu
+                 x[activeRedButton+1]=pointX;
+                 y[activeRedButton+1]=pointY;
             }
 
-            rysuj();
+            refresh_and_draw_all();
         }
             update();
     }
 
-
-
-
-int MainWindow::rysuj()
+int MainWindow::refresh_and_draw_all()
 {
-    clean();
-    if (czy_punkty==1){
-        for (int i=0; i<=ktory_punkt; i++)
+    clean_screen();
+    if (option==1){
+        //przejdz po tablicy x, y
+        for (int i=0; i<=numberOfPixels; i++)
         {
-            if (i % 4 !=0 || i==0)
-                wstaw_punkt(x[i],y[i],grubosc,0,0,255);
-            if (aktywny != -1)
-                wstaw_punkt(x[aktywny],y[aktywny],1,0,255,0);
+            // rysuj czerwone punkty 0,1,2,3 bez 4
+
+            if (i % 4 !=0 || i==0){
+                drawBigPixel(x[i],y[i],0,0,255);
+            }
+
+            //rysuj wszsytkie punkty podczas przesuwania buttona
+//            if (activeRedButton != -1){
+//                drawBigPixel(x[activeRedButton],y[activeRedButton],255,0,0);
+//            }
+
         }
 
-        if (ktory_punkt>=3)
+        if (numberOfPixels>=3)
         {
-            for (int  i=0; i<=segment; i++)
+            for (int  i=0; i<=counterOfLines; i++)
             {
                 draw_bezier(4*i, 4*i, 4*i+1, 4*i+1, 4*i+2, 4*i+2, 4*i+3, 4*i+3);
             }
-
-
-
-
         }
     }
-
-
-
-
     update();
     return(0);
 }
 
-//rysuje krzywa beziera dla 4 punktow - 3go stopnia
+//refresh_and_draw_alle krzywa beziera dla 4 punktow - 3go stopnia
 void MainWindow::draw_bezier(int px0, int py0, int px1, int py1,int px2, int py2,int px3, int py3 )
 {
     int x_1,y_1;
-
-   // QTextStream(stdout) << x0<<y0 << " \n";
 
     //rysowanie krzywej Beizera 3go stopnia
     for (float t=0; t<=1; t+=0.001) {
@@ -273,28 +253,9 @@ void MainWindow::draw_bezier(int px0, int py0, int px1, int py1,int px2, int py2
         y_1=qPow((1-t),3)*y[py0]+3*(qPow((1-t),2))*t*y[py1]+3*(1-t)*qPow(t,2)*y[py2]+qPow(t,3)*y[py3];
 
         //drawPixel(x_1,y_1);
-        wstaw_punkt(x_1,y_1,1,0,255,0);
+        drawPixel(x_1,y_1,0,255,0);
     }
 }
-
-
-// zamalowuje piksel (x,y) na kolor (red,green,blue), domyślnie na biało
-void MainWindow::drawPixel(int x, int y)
-{
-    unsigned char *wsk;
-
-    // sprawdzamy czy (x,y) leży w granicach rysunku
-    if(x>=0 && y>=0 && x<width && y<height)
-    {
-        wsk = img->scanLine(y);
-        wsk[4*x] = b;
-        wsk[4*x+1] = g;
-        wsk[4*x+2] = r;
-    }
-
-}
-
-
 
 // Metoda wywoływana po nacisnięciu przycisku exitButton (,,Wyjście'')
 void MainWindow::on_exitButton_clicked()
@@ -308,89 +269,20 @@ void MainWindow::on_exitButton_clicked()
 // Metoda wywoływana po nacisnięciu przycisku exitButton (,,Wyjście'')
 void MainWindow::on_cleanButton_clicked()
 {
-    clean();
+    clean_screen();
 
-    ktory_punkt=-1;
-    segment=-1;
-
+    numberOfPixels=-1;
+    counterOfLines=-1;
 
     // Po zmodyfikowaniu obiektu QImage odświeżamy okno aplikacji, aby zobaczyc zmiany
     update();
 }
 
-void MainWindow::on_XChanged(int x0)
-{
-   ui->labelX->setText(QString::number(x0));
-}
-
-void MainWindow::on_YChanged(int y0)
-{
-   ui->labelY->setText(QString::number(y0));
-}
-void MainWindow::on_X1Changed(int x1)
-{
-   ui->labelX_2->setText(QString::number(x1));
-}
-
-void MainWindow::on_Y1Changed(int y1)
-{
-   ui->labelY_2->setText(QString::number(y1));
-}
-void MainWindow::on_X2Changed(int x2)
-{
-   ui->labelX_3->setText(QString::number(x2));
-}
-
-void MainWindow::on_Y2Changed(int y2)
-{
-   ui->labelY_3->setText(QString::number(y2));
-}
-void MainWindow::on_X3Changed(int x3)
-{
-   ui->labelX_4->setText(QString::number(x3));
-}
-
-void MainWindow::on_Y3Changed(int y3)
-{
-   ui->labelY_4->setText(QString::number(y3));
-}
 
 void MainWindow::on_radioButton_clicked()
 {
     option=1;
 }
-
-void MainWindow::on_radioButton_2_clicked()
-{
-    option=2;
-}
-
-void MainWindow::on_radioButton_3_clicked()
-{
-    option=3;
-}
-
-void MainWindow::on_radioButton_4_clicked()
-{
-    r=255;
-    g=0;
-    b=0;
-}
-
-void MainWindow::on_radioButton_6_clicked()
-{
-    r=0;
-    g=255;
-    b=0;
-}
-
-void MainWindow::on_radioButton_5_clicked()
-{
-    r=255;
-    g=255;
-    b=255;
-}
-
 
 
 
